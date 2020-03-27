@@ -13,4 +13,12 @@ psql -d postgres -U postgres -c "CREATE DATABASE covid WITH OWNER alexadmin ENCO
 psql -d covid -U alexadmin -c "CREATE SCHEMA marchmad;"
 psql -d covid -U alexadmin -c "GRANT USAGE on SCHEMA marchmad TO alexuser;"
 psql -d covid -U alexadmin -c "GRANT SELECT ON ALL TABLES IN SCHEMA marchmad TO alexuser;"
+
+# Enable postgis extension
+	# Had to copy "libeay32.dll" and "ssleay32.dll" from Postgresql>11>bin>postgisgui into the bin folder just above it. No clue why.
+	# https://gis.stackexchange.com/questions/331653/error-could-not-load-library-c-program-files-postgresql-11-lib-rtpostgis-2-5
+psql -d covid -U postgres -c "CREATE EXTENSION postgis;"
+psql -d covid -U postgres -c "CREATE EXTENSION postgis_topology CASCADE;"
+psql -d covid -U postgres -c "CREATE EXTENSION hstore;"
+
 # Now you're all ready to load spatial COVID-19 and March Madness data into your new postgres database!
