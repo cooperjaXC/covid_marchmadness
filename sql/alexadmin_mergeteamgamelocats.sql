@@ -56,4 +56,15 @@ SET t1tositegeom = ST_MakeLine(t1geom, sitegeom),
 	t2tositegeom = ST_MakeLine(t2geom, sitegeom),
 	t3tositegeom = ST_MakeLine(t3geom, sitegeom),
 	t4tositegeom = ST_MakeLine(t4geom, sitegeom);
-	
+
+-- Add attendance columns accounting for 28 players, coaches & staff per team (112 overall).
+ALTER TABLE marchmad.locats_ncaat19
+ADD COLUMN attninclusive numeric (5, 0);
+ALTER TABLE marchmad.locats_ncaat19
+ADD COLUMN attnincluperteam numeric (7, 2);
+-- 4 teams per session, remember?
+UPDATE marchmad.locats_ncaat19
+SET attninclusive = attendance + (28 * 4);
+-- Then, get that value divided by 4 
+UPDATE marchmad.locats_ncaat19
+SET attnincluperteam = attninclusive / 4;

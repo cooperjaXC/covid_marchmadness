@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS marchmad.locats_ncaat19(
 	Round	text,
 	SiteCity	varchar,
 	SiteState	varchar(2),
-	attendance	numeric,
+	attendance	numeric(5),  -- No game has more than 99,999 fans
 	t1	text,
 	t2	text,
 	t3	text,
