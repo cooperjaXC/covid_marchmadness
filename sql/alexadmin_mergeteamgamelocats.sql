@@ -32,15 +32,23 @@ WHERE teamtab.teamname = sitetab.t4
 ;
 
 -- Calculate the distance from each team in the session to its NCAAT site
+-- 1st, use miles
 UPDATE marchmad.locats_ncaat19
-SET t1dist = ST_Distance(t1geom::geography,sitegeom::geography)* 0.000621371 
+SET t1mi = ST_Distance(t1geom::geography,sitegeom::geography)* 0.000621371 
 			-- could also be > ST_Distance(t1geom,sitegeom, true)/1609.344
 ;
 UPDATE marchmad.locats_ncaat19
-SET t2dist = ST_Distance(t2geom::geography,sitegeom::geography)* 0.000621371,
-	t3dist = ST_Distance(t3geom::geography,sitegeom::geography)* 0.000621371,
-	t4dist = ST_Distance(t4geom::geography,sitegeom::geography)* 0.000621371
+SET t2mi = ST_Distance(t2geom::geography,sitegeom::geography)* 0.000621371,
+	t3mi = ST_Distance(t3geom::geography,sitegeom::geography)* 0.000621371,
+	t4mi = ST_Distance(t4geom::geography,sitegeom::geography)* 0.000621371
 ;
+-- But since most co2eq studies use kilometers, calc that too. 
+	-- putting the "true" booleen argument in the 3rd position makes results of ST_Distance = meters
+UPDATE marchmad.locats_ncaat19
+SET t1km = ST_Distance(t1geom,sitegeom, true)/1000,
+	t2km = ST_Distance(t2geom,sitegeom, true)/1000,
+	t3km = ST_Distance(t3geom,sitegeom, true)/1000,
+	t4km = ST_Distance(t4geom,sitegeom, true)/1000;
 
 -- Get the distance represented as geometry for downstream visualizations in ArcGIS/QGIS
 UPDATE marchmad.locats_ncaat19
@@ -48,3 +56,4 @@ SET t1tositegeom = ST_MakeLine(t1geom, sitegeom),
 	t2tositegeom = ST_MakeLine(t2geom, sitegeom),
 	t3tositegeom = ST_MakeLine(t3geom, sitegeom),
 	t4tositegeom = ST_MakeLine(t4geom, sitegeom);
+	
