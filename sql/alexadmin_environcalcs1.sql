@@ -37,3 +37,21 @@ ALTER TABLE environ.hotelz ADD COLUMN chsbpp real;
 UPDATE environ.hotelz SET chsbpp = chsb_ghgs / 2;
 
 
+-- The big one: Create Table with all the co2eq values in environ schema
+CREATE TABLE environ.mm19co2 AS 
+SELECT 
+-- All the fields from the original table from marchmad schema
+locats.*,
+-- Create all the columns you'll need for CF calculations. 
+-- Connect hotel emissions values to the locations table via a join
+hotl.chsb_ghgs AS hotelghgs,
+hotl.chsbpp as hotelghgpp
+FROM 
+marchmad.locats_ncaat19 locats
+LEFT JOIN environ.hotelz hotl
+	ON hotl.sitecity = locats.sitecity
+;
+GRANT SELECT ON ALL TABLES IN SCHEMA skratch, marchmad, environ TO alexuser;
+
+-- Now calculate the emissions values
+

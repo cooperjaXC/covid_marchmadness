@@ -62,9 +62,31 @@ ALTER TABLE marchmad.locats_ncaat19
 ADD COLUMN attninclusive numeric (5, 0);
 ALTER TABLE marchmad.locats_ncaat19
 ADD COLUMN attnincluperteam numeric (7, 2);
--- 4 teams per session, remember?
+
+-- -- 4 teams per session, remember?
+-- UPDATE marchmad.locats_ncaat19
+-- SET attninclusive = attendance + (28 * 4);
+-- -- Then, get that value divided by 4 
+-- UPDATE marchmad.locats_ncaat19
+-- SET attnincluperteam = attninclusive / 4;
+
+-- 4 teams per session
+	-- but only include teams when they play that session.
+	-- ie when teams don't play Elite 8 or Natty C, only 28 * 2
 UPDATE marchmad.locats_ncaat19
-SET attninclusive = attendance + (28 * 4);
+SET attninclusive = 
+	CASE WHEN ((lower(round) LIKE 'elite%eight') 
+		OR (lower(round) LIKE 'national%championship'))
+	THEN attendance + (28 * 2)
+	ELSE 	attendance + (28 * 4)
+	END;
 -- Then, get that value divided by 4 
 UPDATE marchmad.locats_ncaat19
-SET attnincluperteam = attninclusive / 4;
+SET attnincluperteam = 
+	CASE WHEN ((lower(round) LIKE 'elite%eight') 
+		OR (lower(round) LIKE 'national%championship'))
+	THEN NULL  -- Not an even distribution per team in the session. 
+			-- Some teams have players, some do not
+	ELSE attninclusive / 4  -- When each team in the session is playing and has fans
+	END;
+
