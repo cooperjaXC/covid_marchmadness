@@ -1,9 +1,5 @@
---lilsqlclause
-ALTER TABLE environ.mm19co2
-ADD COLUMN IF NOT EXISTS {targetcol} numeric;
-
-
 --bigsqlclause
+
 UPDATE environ.mm19co2
 SET {targetcol} =  -- t1food = 
 CASE
@@ -42,9 +38,9 @@ CASE
 	WHEN (
 		(lower(round) LIKE 'second%round')
 	) THEN -- 2 more days x nInclu * FoodGHG/person)
-		{winnerdaysvar} * (attnincluperteam * {ghgrate})
+		({winnerdaysvar} * (attnincluperteam * {ghgrate}))
 	WHEN (
-		(lower(round) LIKE 'elite%eight' AND {wincol} NOT LIKE '-')
+	    (lower(round) LIKE 'elite%eight' AND {wincol} NOT LIKE '-')
 		OR (lower(round) LIKE 'national%championship' AND {wincol} NOT LIKE '-')
 	) THEN  -- 2 more days x ((nFans + the 28 players) * FoodGHG/person)
 		2 * ((attnperteam + 28) * {ghgrate})  

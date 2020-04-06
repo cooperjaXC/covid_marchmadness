@@ -1,4 +1,4 @@
-import psycopg2
+import psycopg2, os
 
 teams = ('t1', 't2', 't3', 't4')
 
@@ -49,79 +49,27 @@ daysdict = {
     hotelvar: [2, 2]
 }
 
-travelghg_caseclause = """ CASE WHEN {teamkilometers} < 500
-                        THEN (attnperteam * 0.136) + .058 * 28
-                        WHEN {teamkilometers} >= 500
-                        THEN 
-END
-"""  # Incomplete. May be too complicated to lump into the rest. Do Travel separately. Can be done in PSQL.
 ghgratedict = {
     foodvar: 7.4,  # Berners-Lee et al. 2012
     wastevar: 1.1,  # Cooper 2020
     stadvar: 14.74,  # Hedayati et al. 2014
-    hotelvar: "hotelghgpp",  # Recaurte & ____ 2019
-    travvar: travelghg_caseclause  # Filimonau et al. 2014, Pereira et al. 2019, Dolf & Teehan 2015
+    hotelvar: "hotelghgpp"#,  # Recaurte & ____ 2019
+    #travvar: travelghg_caseclause  # Filimonau et al. 2014, Pereira et al. 2019, Dolf & Teehan 2015
 }
 
+# Pull in snipet files directly from their directory so changes can be made there.
+# To do this, set working directory. Needs to be dynamic because this fil may be run with different os.getcwd()s.
+curdir = os.getcwd()
+parentdir = os.path.abspath(os.path.join(curdir, os.pardir))
+if "coding" not in parentdir:
+    sqldir = os.path.join(parentdir, 'coding', "sql")  # "coding",  # Play with this if this line errors. Hard to tell getcwd()
+else:
+    sqldir = os.path.join(parentdir, 'sql')
+print os.path.exists(sqldir), sqldir  # double check this to be true
 
-bigsqlclausetrial = """
-{wincol} , {ghgrate} , {targetcol} , {normaldaysvar} , {winnerdaysvar}
-"""
-bigsqlclause = """ UPDATE environ.mm19co2
-SET {targetcol} =  -- t1food = 
-CASE
--- GROUP 1
--- First 4, Round 1 Loss
-	-- Attendance Inclusive: ie both fans and team
-	WHEN (
-		(lower(round) LIKE 'first four') 
-		OR (lower(round) LIKE 'first round' AND {wincol} LIKE '%loss%')
-	) THEN  -- 3 Days x nInclu * FoodGHG/person
-		{normaldaysvar} * (attnincluperteam * {ghgrate})
--- Sweet 16 Team Loss, Final 4 Team Loss
-	WHEN (
-		(lower(round) LIKE 'sweet%sixteen' AND {wincol} LIKE '%loss%')	
-		OR (lower(round) LIKE 'final%four' AND {wincol} LIKE '%loss%')	
-	) THEN 
-		-- TEAM: 3 Days x nTeam * FoodGHG/person
-		({normaldaysvar} * (28 * {ghgrate}))
-		+
-		-- FANS: 3 Days x nFans * FoodGHG/person
-		({normaldaysvar} * (attnperteam * {ghgrate}))
--- GROUP 2
-	-- Round 1 Win
-	-- Sweet 16 Win
-	-- Final 4 Win
-	-- Sweet 16 Fan Loss (already above)
-	-- Final 4 Fan Loss (already Above)
-	WHEN (
-		(lower(round) LIKE 'first round' AND {wincol} LIKE '%win%')
-		OR (lower(round) LIKE 'sweet%sixteen' AND {wincol} LIKE '%win%')
-		OR (lower(round) LIKE 'final%four' AND {wincol} LIKE '%win%')	
-	) THEN  -- 3 Days x nInclu * FoodGHG/person
-		{normaldaysvar} * (attnincluperteam * {ghgrate})
--- GROUP 3
--- Round 2 Play, E8 Play, NatCh Play, E8 Fan "-", NatCh Fan "-"
-	WHEN (
-		(lower(round) LIKE 'second%round')
-	) THEN -- 2 more days x nInclu * FoodGHG/person)
-		{winnerdaysvar} * (attnincluperteam * {ghgrate})
-	WHEN (
-	    (lower(round) LIKE 'elite%eight' AND {wincol} NOT LIKE '-')
-		OR (lower(round) LIKE 'national%championship' AND {wincol} NOT LIKE '-')
-	) THEN  -- 2 more days x ((nFans + the 28 players) * FoodGHG/person)
-		2 * ((attnperteam + 28) * {ghgrate})  
--- E8 Fan "-", NatCh Fan "-"
-	WHEN (
-		(lower(round) LIKE 'elite%eight' AND {wincol} LIKE '-')
-		OR (lower(round) LIKE 'national%championship' AND {wincol} LIKE '-')
-	) THEN  -- 2 more days x nFans * FoodGHG/person)
-		2 * (attnperteam * {ghgrate})
--- Check for errors
-	ELSE NULL
-END;
-"""
-lilsqlclause = """ALTER TABLE environ.mm19co2 ADD COLUMN IF NOT EXISTS {targetcol} numeric;"""
+# Set basic multi-function SQL clauses.
+lilsqlclause = """ALTER TABLE environ.mm19co2 ADD COLUMN IF NOT EXISTS {targetcol} NUMERIC(15,3);"""
+    # Limit footprinting col.s to 15 digits. Most it is for now is 10 (w/ 3 decimals) + 5 just in case for la futur.
 dropsqlclause = """ALTER TABLE environ.mm19co2 DROP COLUMN IF EXISTS {targetcol} CASCADE ;"""
 
 
@@ -132,6 +80,11 @@ def carbonfootprinting():
     connection = psycopg2.connect(connstr)
     cursr = connection.cursor()
 
+    # Prepare the .sql file properties for opening
+    bigsnipetfilnam = os.path.join(sqldir, r"mostghgindexes_codesnipet_forpythonedit.sql")
+    snipetread = open(bigsnipetfilnam, "r")
+    bigsqlclause = str(snipetread.read())
+
     # Loop through for each team in session
     for team in allvarsdict:  # t1 - t4
         print "--------------", team, "-----------------"
@@ -141,7 +94,7 @@ def carbonfootprinting():
         loopstadvar = allvarsdict[team][4]
         loopwincol = allvarsdict[team][5]
         innerloopvars = {foodvar: loopfoodvar, wastevar: loopwastevar, hotelvar: loophotelvar, stadvar: loopstadvar}
-        for hardvar in innerloopvars:#allvarsdict[team]:
+        for hardvar in innerloopvars:
             loopvar_targcol = innerloopvars[hardvar]
             # example: for food for t 1: hardvar = foodvar (ie "food") and loopvar = "t1food"
                 # Allows for dynamic lookup in other dictonaries
@@ -163,7 +116,47 @@ def carbonfootprinting():
             # quit()  # Use for testing so you don't overload things. Use to just test 1 col
 
 
-        # sqlclause_loopfood = bigsqlclause.format(wincol=loopwincol, ghgrate=ghgratedict[foodvar], targetcol=loopfoodvar,
-        #                                          normaldaysvar=daysdict[foodvar][0], winnerdaysvar=daysdict[foodvar][0])
-        # sqlclause_loopwaste =
 carbonfootprinting()
+
+
+def travelcfootprinting():
+    """ Carbon footprints each column in PSQL you need. """
+    # Establish your PSQL Connection
+    connstr = "host=localhost dbname=covid user=alexadmin password=alexadmin"
+    connection = psycopg2.connect(connstr)
+    cursr = connection.cursor()
+
+    # Prepare the .sql file for opening.
+    travelsnipetfilnam = os.path.join(sqldir, r"travelfootprinting_codesnipet_forpythonedit.sql")
+    snipetread = open(travelsnipetfilnam, "r")
+    travsqlclause = str(snipetread.read())
+
+    # Loop through for each team in session
+    for team in allvarsdict:  # t1 - t4
+        print "--------------", team, "-----------------"
+        looptravvar = allvarsdict[team][2]  # EX: t1trav
+        hardvar = travvar
+        loopvar_targcol = looptravvar
+        loopwincol = allvarsdict[team][5]
+        loopteamkmcol = allvarsdict[team][6]
+        # example: for food for t 1: hardvar = foodvar (ie "food") and loopvar = "t1food"
+            # Allows for dynamic lookup in other dictonaries
+        dropsqlclause_filled = dropsqlclause.format(targetcol=loopvar_targcol)
+        lilsqlclause_filled = lilsqlclause.format(targetcol=loopvar_targcol)
+        travsqlclause_filled = travsqlclause.format(wincol=loopwincol, targetcol=loopvar_targcol,
+                                                    teamkilometers=loopteamkmcol)
+        # # Print statements if you need to double check what on earth is going on
+        print lilsqlclause_filled
+        print "--------"
+        # print travsqlclause_filled
+        # print "- - - - - - - "
+        # print hardvar, loopvar_targcol
+        # print loopwincol, loopteamkmcol
+
+        # Now (drumroll........) EXECUTE THE PSQL!
+        cursr.execute(dropsqlclause_filled)
+        cursr.execute(lilsqlclause_filled)
+        cursr.execute(travsqlclause_filled)
+        connection.commit()
+
+travelcfootprinting()
