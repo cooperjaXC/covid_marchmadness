@@ -54,4 +54,4 @@ LEFT JOIN environ.hotelz hotl
 GRANT SELECT ON ALL TABLES IN SCHEMA skratch, marchmad, environ TO alexuser;
 
 -- Now calculate the emissions values
-
+	-- This is done in alexadmin_environcalcs2.py in the python subdir of this project.

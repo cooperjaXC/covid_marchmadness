@@ -36,6 +36,10 @@ for teem in teams:
         (teem + 'travelfrom')  # 7
     )
 
+indexlistoflists = (teamsfood, teamswaste, teamstravel, teamshotel, teamsstad)
+indexdicoflists = {foodvar: teamsfood, wastevar: teamswaste, travvar: teamstravel, hotelvar: teamshotel,
+                   stadvar: teamsstad}
+
 # vas in sql script to set :
 # format(wincol=___, ghgrate-___, targetcol=___, normaldaysvar=____, winnerdaysvar=____)
 
@@ -120,7 +124,7 @@ carbonfootprinting()
 
 
 def travelcfootprinting():
-    """ Carbon footprints each column in PSQL you need. """
+    """ Carbon footprints the travel columns in PSQL. """
     # Establish your PSQL Connection
     connstr = "host=localhost dbname=covid user=alexadmin password=alexadmin"
     connection = psycopg2.connect(connstr)
@@ -135,12 +139,10 @@ def travelcfootprinting():
     for team in allvarsdict:  # t1 - t4
         print "--------------", team, "-----------------"
         looptravvar = allvarsdict[team][2]  # EX: t1trav
-        hardvar = travvar
         loopvar_targcol = looptravvar
         loopwincol = allvarsdict[team][5]
         loopteamkmcol = allvarsdict[team][6]
-        # example: for food for t 1: hardvar = foodvar (ie "food") and loopvar = "t1food"
-            # Allows for dynamic lookup in other dictonaries
+
         dropsqlclause_filled = dropsqlclause.format(targetcol=loopvar_targcol)
         lilsqlclause_filled = lilsqlclause.format(targetcol=loopvar_targcol)
         travsqlclause_filled = travsqlclause.format(wincol=loopwincol, targetcol=loopvar_targcol,
@@ -160,3 +162,90 @@ def travelcfootprinting():
         connection.commit()
 
 travelcfootprinting()
+
+
+def totalteamfootprint():
+    """ Calculate the Carbon Footprint for each team in each session. Then calculate the session's total footprint. """
+    # Establish your PSQL Connection
+    connstr = "host=localhost dbname=covid user=alexadmin password=alexadmin"
+    connection = psycopg2.connect(connstr)
+    cursr = connection.cursor()
+
+    # Prepare the .sql file for opening. # Is there even a psql file for this? no.... so leave out.
+    travelsnipetfilnam = os.path.join(sqldir, r"travelfootprinting_codesnipet_forpythonedit.sql")
+    snipetread = open(travelsnipetfilnam, "r")
+    travsqlclause = str(snipetread.read())
+
+    # Loop through for each team in session
+    for team in allvarsdict:  # t1 - t4
+        print "--------------", team, "-----------------"
+        teamtotcol = team + "tot"  # To be the column for the total footprints for each team in the session.
+        looptravvar = allvarsdict[team][2]  # EX: t1trav
+        loopfoodvar = allvarsdict[team][0]  # EX: t1food
+        loopwastevar = allvarsdict[team][1]
+        loophotelvar = allvarsdict[team][3]
+        loopstadvar = allvarsdict[team][4]
+        loopwincol = allvarsdict[team][5]  # Should be unused. Delete during cleaning.
+        loopteamkmcol = allvarsdict[team][6]  # Should also be unused.
+
+        sqlsumexpr = """UPDATE environ.mm19co2 SET {targetcol} = {teamfoodcol} + {teamwastecol} + {teamtravcol} + 
+        {teamhotcol} + {teamstadcol};"""
+
+        dropsqlclause_filled = dropsqlclause.format(targetcol=teamtotcol)
+        lilsqlclause_filled = lilsqlclause.format(targetcol=teamtotcol)
+        totsqlclause_filled = sqlsumexpr.format(targetcol=teamtotcol, teamfoodcol=loopfoodvar,
+                                                teamwastecol=loopwastevar, teamtravcol=looptravvar,
+                                                teamhotcol=loophotelvar, teamstadcol=loopstadvar)
+        # # Print statements if you need to double check what on earth is going on
+        print lilsqlclause_filled
+        print "--------"
+        # print travsqlclause_filled
+        # print "- - - - - - - "
+        # print hardvar, loopvar_targcol
+        # print loopwincol, loopteamkmcol
+
+        # Now (drumroll........) EXECUTE THE PSQL!
+        cursr.execute(dropsqlclause_filled)
+        cursr.execute(lilsqlclause_filled)
+        cursr.execute(totsqlclause_filled)
+        connection.commit()
+
+    # Now get index totals per session
+    for idx in indexdicoflists:
+        idxnam = idx
+        listofidxcols = indexdicoflists[idx]
+        idxcolsumnam = "sesh" + idxnam + "tot"
+
+        sqlidxsumexp = """UPDATE environ.mm19co2 SET {targetcol} = {team1idxcol} + {team2idxcol} + {team3idxcol} + 
+        {team4idxcol};"""
+
+        dropsqlclausefilled = dropsqlclause.format(targetcol=idxcolsumnam)
+        lilsqlclausefilled = lilsqlclause.format(targetcol=idxcolsumnam)
+        totsqlclausefilled = sqlidxsumexp.format(targetcol=idxcolsumnam, team1idxcol=listofidxcols[0],
+                                                 team2idxcol=listofidxcols[1], team3idxcol=listofidxcols[2],
+                                                 team4idxcol=listofidxcols[3])
+
+        cursr.execute(dropsqlclausefilled)
+        cursr.execute(lilsqlclausefilled)
+        cursr.execute(totsqlclausefilled)
+        connection.commit()
+
+    # Now total all the totals for a session total. How many GHGs for each session were emitted?
+    sessiontotalvar = 'seshtotghg'
+    sqlsessiontotalexpr = """UPDATE environ.mm19co2 SET {targetcol} = t1tot + t2tot + t3tot + t4tot;""".format(
+        targetcol=sessiontotalvar)
+    cursr.execute(dropsqlclause.format(targetcol=sessiontotalvar))
+    cursr.execute(lilsqlclause.format(targetcol=sessiontotalvar))  # Add column to table
+    cursr.execute(sqlsessiontotalexpr)
+    connection.commit()
+
+    # Also find out the per person per session count by dividing by the attninclusive value. (Imperfect but darn close)
+    sessionppvar = 'seshghgpp'
+    sqlsessiontotalexpr = """UPDATE environ.mm19co2 SET {targetcol} = {totalghgcol} / attninclusive;""".format(
+        targetcol=sessionppvar, totalghgcol=sessiontotalvar)
+    cursr.execute(dropsqlclause.format(targetcol=sessionppvar))
+    cursr.execute(lilsqlclause.format(targetcol=sessionppvar))  # Add column to table
+    cursr.execute(sqlsessiontotalexpr)
+    connection.commit()
+
+totalteamfootprint()
