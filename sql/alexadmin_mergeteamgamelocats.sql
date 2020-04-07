@@ -5,7 +5,12 @@
 -- Update the session table to have geoms for site locations. 
 UPDATE marchmad.locats_ncaat19
 SET sitegeom = ST_SetSRID(ST_MakePoint(sitelon, sitelat),4326);
---GRANT SELECT ON ALL TABLES IN SCHEMA skratch, marchmad TO alexuser;
+-- Make some manual geometry edits to get Minneapolis & Dayton's geoms standardized
+UPDATE marchmad.locats_ncaat19 SET sitegeom = '0101000020E61000008EC5DBEFF55057C06F48A302277D4640'
+WHERE sitegeom = '0101000020E6100000582547F0F55057C03FC4060B277D4640';
+UPDATE marchmad.locats_ncaat19 SET sitegeom = '0101000020E6100000074C9649430C55C0822F963325E14340'
+WHERE sitegeom = '0101000020E6100000D2AB014A430C55C017EF6C3425E14340';
+-- Create index on sitegeom
 DROP INDEX IF EXISTS og_sitegeom_idx;
 CREATE INDEX og_sitegeom_idx ON marchmad.locats_ncaat19 USING gist(sitegeom);
 

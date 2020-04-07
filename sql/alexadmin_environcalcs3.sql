@@ -1,11 +1,4 @@
 -- Tinker with environ.mm19co2 for downstream edits
-
--- Make some manual geometry edits to get Minneapolis & Dayton's geoms standardized
-UPDATE environ.mm19co2 SET sitegeom = '0101000020E6100000582547F0F55057C03FC4060B277D4640'
-WHERE sitegeom = '0101000020E61000008EC5DBEFF55057C06F48A302277D4640';
-UPDATE environ.mm19co2 SET sitegeom = '0101000020E6100000074C9649430C55C0822F963325E14340'
-WHERE sitegeom = '0101000020E6100000D2AB014A430C55C017EF6C3425E14340';
-
 -- Get summaries of distances traveled at the session level
 ALTER TABLE environ.mm19co2 DROP COLUMN IF EXISTS seshtotkm;
 ALTER TABLE environ.mm19co2 ADD COLUMN IF NOT EXISTS seshtotkm NUMERIC(15,3);
@@ -69,3 +62,4 @@ CREATE INDEX pathgeom_ptpt_idx ON environ.mm19_pteam_ptrip USING gist (travelgeo
 CREATE INDEX sitegeom_ptpt_idx ON environ.mm19_pteam_ptrip USING gist (sitegeom);
 CREATE INDEX schoolgeom_ptpt_idx ON environ.mm19_pteam_ptrip USING gist (schoolgeom);
 
+-- 
