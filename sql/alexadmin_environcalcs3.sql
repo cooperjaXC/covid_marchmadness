@@ -39,9 +39,9 @@ ADD COLUMN pkey_id SERIAL PRIMARY KEY;
 	-- This is key because it will normalize some of the varying session weirdness.
 CREATE TABLE environ.mm19_pteam_ptrip AS SELECT
 team, sitecity,	sitestate, COUNT(*) AS gamesplayed,	
-CAST(AVG(attnperteam) AS NUMERIC(15,2)) as attnptpg, 
+CAST(AVG(attnperteam) AS NUMERIC(15,2)) as attnptptrip, 
 CAST(SUM(attnperteam) AS NUMERIC(10)) as sumrawattn,
-CAST(AVG(attnincluperteam)AS NUMERIC(15,2)) AS attnincluptpg, 
+CAST(AVG(attnincluperteam)AS NUMERIC(15,2)) AS attnincluptptrip, -- Inclusive attendance per team per game in trip. Big one!
 CAST(SUM(attnincluperteam)AS NUMERIC(10)) AS sumincluattn, 
 miles, km,	hotelghgpp,	
 sum(teamfood) AS sumtfood, sum(teamhotel) as sumthotel, sum(teamwaste) as sumtwaste, 
@@ -62,4 +62,61 @@ CREATE INDEX pathgeom_ptpt_idx ON environ.mm19_pteam_ptrip USING gist (travelgeo
 CREATE INDEX sitegeom_ptpt_idx ON environ.mm19_pteam_ptrip USING gist (sitegeom);
 CREATE INDEX schoolgeom_ptpt_idx ON environ.mm19_pteam_ptrip USING gist (schoolgeom);
 
--- 
+
+-- Now consolidate per team
+CREATE TABLE environ.mm19perteam AS SELECT
+team, SUM(gamesplayed) AS ngmsplyd, COUNT(gamesplayed) AS ntrips, sum(attnptptrip) AS totfanattnpteam, SUM(sumrawattn) as sum_raw_indoor_attn, 
+-- This is the big normalizing attendance field you'll want. 
+SUM(attnincluptptrip) AS totincluattnpteam, -- !!
+SUM(sumincluattn) AS sum_inclu_indoor_attn,
+CAST(AVG(miles) AS REAL) AS avmiptrip, CAST(AVG(km) AS REAL) AS avgkmptrip,
+SUM(sumtfood) AS sumtfood, SUM(sumthotel) AS sumthotel, SUM(sumtwaste) AS sumtwaste, SUM(sumtstad) AS sumtstad, 
+SUM(sumttrav) AS sumttrav, SUM(totghg) AS totghg, 
+-- ghgpp 
+CAST((sum(totghg)/SUM(attnincluptptrip)) AS NUMERIC(15,3)) AS ghgppptptrip,
+schoolgeom, ST_Collect(travelgeom) AS alltripsgeom, ST_Collect(sitegeom) AS dstnatngeom  -- merge travelgeom into multipart new geom line file
+FROM environ.mm19_pteam_ptrip
+GROUP BY team, schoolgeom
+;
+GRANT SELECT ON ALL TABLES IN SCHEMA skratch, marchmad, environ TO alexuser;
+ALTER TABLE environ.mm19perteam 
+ADD COLUMN pkey_id SERIAL PRIMARY KEY;
+-- Create geom idxs
+CREATE INDEX schoolgeom_pert_idx ON environ.mm19perteam USING gist (schoolgeom);
+CREATE INDEX atripsgm_pert_idx ON environ.mm19perteam USING gist (alltripsgeom);
+
+-- Try to consolidate per host destination
+CREATE TABLE environ.mm19_bylocat AS SELECT
+sitecity, sitestate, 
+CAST(((SUM(gamesplayed)/2) - (CASE WHEN (SUM(gamesplayed)/2) >5 THEN 0 ELSE 1 END) )
+	AS NUMERIC(1,0)) AS gamesplayed,  -- How many games were played at this location
+SUM(attnptptrip) AS totfanattn,	SUM(sumrawattn) AS sum_raw_indoor_attn,	SUM(attnincluptptrip) AS totincluattn, SUM(sumincluattn) AS sum_inclu_indoor_attn, 	
+CAST(AVG(miles) AS REAL) AS avmipteam, CAST(AVG(km) AS REAL) AS avgkmpteam, hotelghgpp,
+SUM(sumtfood) AS sumtfood, 	SUM(sumthotel) AS sumthotel, 	SUM(sumtwaste) AS sumtwaste, 
+SUM(sumtstad) AS sumtstad, 	SUM(sumttrav) AS sumttrav, 	SUM(totghg) AS totghg, 
+CAST((sum(totghg)/SUM(attnincluptptrip)) AS NUMERIC(15,3)) AS ghgpppsite,
+sitegeom, ST_Collect(schoolgeom) AS schoolsgeom, ST_Collect(travelgeom) AS alltripsgeom
+,ST_X(sitegeom) as sitelon,ST_Y(Sitegeom) as sitelat
+FROM environ.mm19_pteam_ptrip
+GROUP BY sitecity, sitestate, hotelghgpp, sitegeom
+ORDER BY sitecity
+;
+GRANT SELECT ON ALL TABLES IN SCHEMA skratch, marchmad, environ TO alexuser;
+ALTER TABLE environ.mm19_bylocat
+ADD COLUMN pkey_id SERIAL PRIMARY KEY;
+-- Create geom idxs
+CREATE INDEX sitegeom_ploct_idx ON environ.mm19_bylocat USING gist (sitegeom);
+CREATE INDEX atripsgm_ploct_idx ON environ.mm19_bylocat USING gist (alltripsgeom);
+
+-- Get one final table that tabulates stats for the entire tournament. 
+CREATE TABLE environ.mm19_tourneystats AS SELECT 
+CAST(1 AS NUMERIC(1,0)) AS unqid,
+COUNT(DISTINCT(team)) AS nteams, COUNT(DISTINCT(sitecity)) AS nsites, CAST(67 AS NUMERIC(2,0)) AS ngames,
+SUM(attnptptrip) AS totfanattn,	SUM(sumrawattn) AS sum_raw_indoor_attn,	SUM(attnincluptptrip) AS totincluattn, SUM(sumincluattn) AS sum_inclu_indoor_attn, 	
+CAST(AVG(miles) AS REAL) AS avmipteam, CAST(AVG(km) AS REAL) AS avgkmpteam, 
+CAST(SUM(miles) AS REAL) AS totmiles, CAST(sum(km) AS REAL) AS sumkm, 
+SUM(sumtfood) AS sumtfood, 	SUM(sumthotel) AS sumthotel, 	SUM(sumtwaste) AS sumtwaste, 
+SUM(sumtstad) AS sumtstad, 	SUM(sumttrav) AS sumttrav, 	SUM(totghg) AS totghg, 
+CAST((sum(totghg)/SUM(attnincluptptrip)) AS NUMERIC(15,3)) AS ghgpp
+FROM environ.mm19_pteam_ptrip;
+GRANT SELECT ON ALL TABLES IN SCHEMA skratch, marchmad, environ TO alexuser;

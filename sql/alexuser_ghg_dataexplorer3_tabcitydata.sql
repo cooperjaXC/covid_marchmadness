@@ -43,3 +43,25 @@ ORDER BY
 -- sum(seshtotghg) / sum(attninclusive) DESC  -- avgghgpp
 sum(attninclusive)/count(*) DESC  -- avgattnpersesh
 ;
+
+
+
+-- Try it again after tablulating by team and trip
+SELECT
+sitecity, sitestate, 
+CAST(((SUM(gamesplayed)/2) - (CASE WHEN (SUM(gamesplayed)/2) >5 THEN 0 ELSE 1 END) )
+	AS NUMERIC(1,0)) AS gamesplayed, 
+SUM(attnptptrip) AS totfanattn,	SUM(sumrawattn) AS sum_raw_indoor_attn,	SUM(attnincluptptrip) AS totincluattn, SUM(sumincluattn) AS sum_inclu_indoor_attn, 	
+CAST(AVG(miles) AS REAL) AS avmipteam, CAST(AVG(km) AS REAL) AS avgkmpteam, hotelghgpp,
+SUM(sumtfood) AS sumtfood, 	SUM(sumthotel) AS sumthotel, 	SUM(sumtwaste) AS sumtwaste, 
+SUM(sumtstad) AS sumtstad, 	SUM(sumttrav) AS sumttrav, 	SUM(totghg) AS totghg, 
+CAST((sum(totghg)/SUM(attnincluptptrip)) AS NUMERIC(15,3)) AS ghgppptptrip,
+sitegeom, ST_Collect(schoolgeom) AS schoolsgeom, ST_Collect(travelgeom) AS alltripsgeom
+FROM environ.mm19_pteam_ptrip
+
+GROUP BY sitecity, sitestate, hotelghgpp, sitegeom
+-- 	(sitecity), (sitestate), sitegeom	
+
+ORDER BY -- team
+sitecity
+;
