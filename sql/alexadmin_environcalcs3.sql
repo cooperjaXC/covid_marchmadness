@@ -40,9 +40,9 @@ ADD COLUMN pkey_id SERIAL PRIMARY KEY;
 CREATE TABLE environ.mm19_pteam_ptrip AS SELECT
 team, sitecity,	sitestate, COUNT(*) AS gamesplayed,	
 CAST(AVG(attnperteam) AS NUMERIC(15,2)) as attnptptrip, 
-CAST(SUM(attnperteam) AS NUMERIC(10)) as sumrawattn,
+CAST(SUM(attnperteam) AS NUMERIC(15,2)) as sumrawattn,  -- Cast with decimals to avoid downstream rounding errors. 
 CAST(AVG(attnincluperteam)AS NUMERIC(15,2)) AS attnincluptptrip, -- Inclusive attendance per team per game in trip. Big one!
-CAST(SUM(attnincluperteam)AS NUMERIC(10)) AS sumincluattn, 
+CAST(SUM(attnincluperteam)AS NUMERIC(15,2)) AS sumincluattn, 
 miles, km,	hotelghgpp,	
 sum(teamfood) AS sumtfood, sum(teamhotel) as sumthotel, sum(teamwaste) as sumtwaste, 
 SUM(teamstad) AS sumtstad, SUM(teamtrav)AS sumttrav, SUM(totghg) AS totghg,
