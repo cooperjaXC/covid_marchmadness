@@ -68,3 +68,9 @@ CREATE TABLE IF NOT EXISTS marchmad.locats_ncaat19(
 	t4tositegeom 	geometry
 	);
 GRANT SELECT ON ALL TABLES IN SCHEMA skratch, marchmad TO alexuser;
+
+-- Now, manually import the 2019ncaatourneylocatdata.csv 
+-- from the \data__init__forgit directory with pgAdmin4.
+
+-- you'll also need to load 2019ncaatourneyteams.csv from the \data__init__forgit directory.
+	-- this will render some of the qgis import process above moot.
