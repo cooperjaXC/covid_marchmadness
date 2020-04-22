@@ -1,4 +1,4 @@
-#Carbon Footprinting the 2019 NCAA Men's Basketball Tournament
+# Carbon Footprinting the 2019 NCAA Men's Basketball Tournament
 
 These scripts are the ones run by J. A. Cooper to roughly estimate 
 the quantity of greenhouse gas (GHG) emissions associated with the 
@@ -21,9 +21,9 @@ with a similar methodology (see that
 Included here are basic instructions for understanding the process 
 and reproducing it if necessary.
 
-##Prerequisites
+## Prerequisites
 
-###Install
+### Install
 
 * [PostgreSQL](https://www.postgresql.org/download/)
     * [PostGIS extension](https://postgis.net/windows_downloads/)
@@ -35,8 +35,8 @@ and reproducing it if necessary.
         
 	python -m pip install psycopg2
 
-###Personal Machine Setup
-####Connections to PostgreSQL Databases 
+### Personal Machine Setup
+#### Connections to PostgreSQL Databases 
 * This uses individualized roles created for the author's personal workflow. 
 A user looking to reproduce this work may need to adopt these role names or change role names
 referenced downstream in .sql (and other) files. 
@@ -87,11 +87,11 @@ host  |  replication |     all      |       ::1/128     |            md5
    
     /usr/pgsql-11/bin/pg_ctl reload -D /data/pgsql_data/data
 
-##Database Creation
+## Database Creation
 * Run each line of the **~/bash/createpsqldb_fromcmdline.bash** to create the covid database and enable all PostGIS features.
 * Connect to the database in pgAdmin 4
 
-##Loading Initial Data 
+## Loading Initial Data 
 
 The data for this project is in .csv format in the **~\data_init_forgit** directory. 
 
@@ -106,7 +106,7 @@ processes laid out in **~\sql\alexadmin_initdb_importdata.sql**.
     * After this, manually import the *2019ncaatourneylocatdata.csv* from the **\data__init__forgit**
      directory [using pgAdmin 4](https://www.pgadmin.org/docs/pgadmin4/development/import_export_data.html).
 
-###Merging team and session data
+### Merging team and session data
 After successfully loading the TABLES *marchmad.teams_ncaat19* and *marchmad.locats_ncaat19*,
 run '**~/sql/alexadmin_mergeteamgamelocats.sql**'.
 
@@ -114,7 +114,7 @@ This will result in a *marchmad.locats_ncaat19* table that contains attendance a
 for each session site and all 4 teams from that session.
 
 
-##Carbon Footprinting the 2019 Data
+## Carbon Footprinting the 2019 Data
 1. Run '**~/sql/alexadmin_environcalcs1.sql**' to set up the *environ* SCHEMA 
 and import hotel emissions data  from *Ricaurte & Jagarajan (2019)*.
 
@@ -129,8 +129,8 @@ the *environ* SCHEMA at the following levels:
     * per-host site
     * the whole tournament. 
 
-##Exploring the Data
-#####Use the alexuser_.sql files in '**~/sql/**' directory 
+## Exploring the Data
+##### Use the alexuser_.sql files in '**~/sql/**' directory 
 These alexuser files will give you a head start in exploring your new data in a safer user rather than admin
 querying arena that will ensure you don't destroy your hard-created database. 
 
