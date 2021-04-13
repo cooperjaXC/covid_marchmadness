@@ -66,9 +66,9 @@ ghgratedict = {
 curdir = os.getcwd()
 parentdir = os.path.abspath(os.path.join(curdir, os.pardir))
 if "coding" not in parentdir:
-    sqldir = os.path.join(parentdir, 'coding', "sql")  # "coding",  # Play with this if this line errors. Hard to tell getcwd()
+    sqldir = os.path.join(parentdir, 'coding', "python_snippets","sql")  # "coding",  # Play with this if this line errors. Hard to tell getcwd()
 else:
-    sqldir = os.path.join(parentdir, 'sql')
+    sqldir = os.path.join(parentdir,  "python_snippets", 'sql')
 print os.path.exists(sqldir), sqldir  # double check this to be true
 
 # Set basic multi-function SQL clauses.
