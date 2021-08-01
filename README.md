@@ -143,8 +143,8 @@ the *environ* SCHEMA at the following levels:
     * the whole tournament. 
 
 ## Exploring the Data
-##### Use the `alexuser_.sql` files in `~/sql/` directory 
-These alexuser files will give you a head start in exploring your new data in a safer user rather than admin
+##### Use the `user_.sql` files in `~/sql/` directory 
+These user files will give you a head start in exploring your new data in a safer user rather than admin
 querying arena that will ensure you don't destroy your hard-created database. 
 
 Also, you can import the data with its spatial attributes in the *geometry* columns into your GIS viewer like ArcGIS or QGIS.
