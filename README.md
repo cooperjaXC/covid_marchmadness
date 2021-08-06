@@ -2,11 +2,11 @@
 
 These scripts are the ones run by J. A. Cooper to roughly estimate 
 the quantity of greenhouse gas (GHG) emissions associated with the 
-2019 USA sports phenomenon, March Madness.
+2019 NCAA Men's Basketball Tournament, i.e. "March Madness," in the United States.
 
 This project is associated with peer-reviewed publications in 
-*[Tourism Geographies](https://doi.org/10.1080/14616688.2020.1759135)*
-and the *[Journal of Cleaner Production]()*,
+the *[Journal of Cleaner Production](https://doi.org/10.1016/j.jclepro.2021.128475)*
+and *[Tourism Geographies](https://doi.org/10.1080/14616688.2020.1759135)*,
 and it draws heavily from a previous publication in the 
 *[Journal of Sport & Tourism](https://doi.org/10.1080/14775085.2020.1726802)* 
 with a similar methodology (see that 
@@ -19,7 +19,7 @@ with a similar methodology (see that
     Cooper, J. A. & Derek H. Alderman (2020). Cancelling March Madness exposes opportunity for more 
         sustainable sports tourism economy. Tourism Geographies, 22(3): 525-535.
     Cooper, J. A. & Brian M. McCullough (2021). Bracketing sustainability: Carbon footprinting March Madness 
-        to rethink sustainable tourism approaches and measurements. Journal of Cleaner Production.
+        to rethink sustainable tourism approaches and measurements. Journal of Cleaner Production, 318.
 
 Included here are basic instructions for understanding the process 
 and reproducing it if necessary.
