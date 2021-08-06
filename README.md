@@ -36,10 +36,9 @@ please make necessary adjustments if using different configurations or versions 
 * Python 2.7
     * psycopg2 package
         * To install this package, use this command in the command line or bash:
-
-
-	python -m pip install psycopg2
-
+```
+python -m pip install psycopg2
+```
 ### Personal Machine Setup
 #### Connections to PostgreSQL Databases 
 * This uses individualized roles created for the author's personal workflow. 
@@ -47,18 +46,17 @@ A user looking to reproduce this work may need to adopt these role names or chan
 referenced downstream in .sql (and other) files. 
 * Setup a [pgpass.conf file](https://www.postgresql.org/docs/current/libpq-pgpass.html) 
 in your App Data \ postgresql directory so you can access these databases.
-    
-    ```
-    ~\AppData\postgresql\pgpass.conf
-    ```
-
-   * Make sure these items are included 
+```
+~\AppData\postgresql\pgpass.conf
+```
+* Make sure these items are included 
 
 pgpass.conf |
 ------- |
-localhost:5432:covid:alexadmin:alexadmin |
-localhost:5432:covid:alexuser:alexuser |
+localhost:5432:covid:adminname:adminpass |
+localhost:5432:covid:username:userpass |
 
+    
    * Change permissions for that file.
 
     $ chmod 0600 pgpass.conf
@@ -68,10 +66,9 @@ localhost:5432:covid:alexuser:alexuser |
     $ export PGPASSFILE='~\AppData\postgresql\pgpass.conf'
 
 * Also set up the pg_hba.conf file in your Program Files \ PostgreSQL directory 
-
-    ```
-    ~\ProgramFiles\postgresql\11\data\pg_hba.conf
-    ```
+```
+~\ProgramFiles\postgresql\11\data\pg_hba.conf
+```
 
 * Make sure these items are included 
 
@@ -81,9 +78,9 @@ localhost:5432:covid:alexuser:alexuser |
 \# IPv4 local connections: |
 host  |  all     |        all        |     127.0.0.1/32     |       md5
 \# IPv6 local connections: |
-host  |  all       |      alexadmin   |	::1/128         |        trust
+host  |  all       |      adminname   |	::1/128         |        trust
 host  |  all       |      postgres	  | 	::1/128      |           md5
-host  |  all       |      alexuser	 | 	::1/128          |       trust
+host  |  all       |      username	 | 	::1/128          |       trust
 \# Allow replication connections from localhost, by a user with the replication privilege. |
 host |   replication  |   all      |       127.0.0.1/32  |          md5
 host  |  replication |     all      |       ::1/128     |            md5
@@ -108,33 +105,33 @@ host  |  replication |     all      |       ::1/128     |            md5
 
 The data for this project is in .csv format in the `~\data_init_forgit` directory. 
 
-The .sql file associated with this process is `~\sql\alexadmin_initdb_importdata.sql`
+The .sql file associated with this process is `~\sql\admin0_initdb_importdata.sql`
 * Team data was originally uploaded via KML &rarr; QGIS &rarr; PostgreSQL covid database midway through 
-processes laid out in `~\sql\alexadmin_initdb_importdata.sql`.
+processes laid out in `~\sql\admin0_initdb_importdata.sql`.
     * However, some work has already been completed for you. Find a .csv copy of this data in 
     the `~\data_init_forgit` directory. Then, upload it manually to the marchmad SCHEMA of covid DATABASE
     [using pgAdmin 4](https://www.pgadmin.org/docs/pgadmin4/development/import_export_data.html).
-* Session location data is uploaded via running `~\sql\alexadmin_initdb_importdata.sql`. A shell table
+* Session location data is uploaded via running `~\sql\admin0_initdb_importdata.sql`. A shell table
 marchmad.locats_ncaat19 is created with the code in the file. 
     * After this, manually import the `2019ncaatourneylocatdata.csv` from the `~\data__init__forgit`
      directory [using pgAdmin 4](https://www.pgadmin.org/docs/pgadmin4/development/import_export_data.html).
 
 ### Merging team and session data
 After successfully loading the TABLES `marchmad.teams_ncaat19` and `marchmad.locats_ncaat19`,
-run `~/sql/alexadmin_mergeteamgamelocats.sql`.
+run `~/sql/admin1_mergeteamgamelocats.sql`.
 
 This will result in a `marchmad.locats_ncaat19` table that contains attendance and locational data
 for each session site and all 4 teams from that session.
 
 
 ## Carbon Footprinting the 2019 Data
-1. Run `~/sql/alexadmin_environcalcs1.sql` to set up the *environ* SCHEMA 
+1. Run `~/sql/admin2_environcalcs1.sql` to set up the *environ* SCHEMA 
 and import hotel emissions data  from *Ricaurte & Jagarajan (2019)*.
 
-2. Next is the only python step of the project. Run `~/python/alexadmin_environcalcs2.py` for quick
+2. Next is the only python step of the project. Run `~/python/admin3_environcalcs2.py` for quick
 psycopg2-bsaed PSQL commands to actually footprint the tournament at the per-session level.
 
-3. Run `~/sql/alexadmin_environcalcs3.sql` to tabulate the data in different ways by creating tables in 
+3. Run `~/sql/admin4_environcalcs3.sql` to tabulate the data in different ways by creating tables in 
 the *environ* SCHEMA at the following levels:
     * per-team-per-round
     * per-trip
